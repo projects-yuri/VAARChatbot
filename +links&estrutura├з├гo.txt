@@ -1,0 +1,18 @@
+https://visualiza.dee.rs.gov.br/
+https://avaliacaoemonitoramentoriograndedosul.caeddigital.net/#!/minhapagina
+https://imersvis.dee.rs.gov.br/
+
+RS/
+├── Legislação/
+│   ├── EC 108-2020.pdf
+│   ├── Lei 15766-2021.pdf
+│   ├── Decreto SAERS 56679-2022.pdf
+│   ├── Decreto IMERS.pdf
+│   ├── Decreto PRE.pdf
+│   └── Metodologia IMERS-PRE.pdf
+└── Bases de Dados/
+    ├── SAERS_resultados_por_municipio.csv
+    ├── IMERS_PRE_por_municipio.csv
+    ├── IPM_2026_definitivo.pdf
+    ├── INEP_censo_escolar.csv
+    └── IBGE_populacao_municipios.csv
