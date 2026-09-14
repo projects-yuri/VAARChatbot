@@ -7,6 +7,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import Iterable
+import time
 
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
@@ -36,14 +37,40 @@ def clean_text(text: str) -> str:
 # PDF
 # =========================================================
 
-def extract_pdf(path: Path) -> Iterable[tuple[str, int]]:
-    reader = PdfReader(str(path))
+def extract_pdf(
+    path: Path,
+) -> Iterable[tuple[str, int]]:
 
-    for page_number, page in enumerate(reader.pages, start=1):
-        text = clean_text(page.extract_text() or "")
+    try:
+        reader = PdfReader(
+            str(path),
+            strict=False,
+        )
 
-        if text:
-            yield text, page_number
+        for page_number, page in enumerate(
+            reader.pages,
+            start=1,
+        ):
+            try:
+                text = clean_text(
+                    page.extract_text() or ""
+                )
+
+                if text:
+                    yield text, page_number
+
+            except Exception as error:
+                print(
+                    f"AVISO: erro na página "
+                    f"{page_number} de {path.name}: "
+                    f"{error}"
+                )
+
+    except Exception as error:
+        print(
+            f"AVISO: PDF ignorado "
+            f"({path.name}): {error}"
+        )
 
 
 # =========================================================
@@ -376,6 +403,32 @@ def document_records(
                 if len(text) >= 20:
                     yield text, metadata
 
+# =========================================================
+# TEMPO
+# =========================================================
+
+def create_embedding_function(
+    max_retries: int = 3,
+) -> SentenceTransformerEmbeddingFunction:
+
+    last_error = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            return SentenceTransformerEmbeddingFunction(
+                model_name=EMBEDDING_MODEL
+            )
+
+        except Exception as error:
+            last_error = error
+
+            if attempt < max_retries:
+                time.sleep(5)
+
+    raise RuntimeError(
+        f"Falha ao carregar o modelo de embeddings após "
+        f"{max_retries} tentativas: {last_error}"
+    )
 
 # =========================================================
 # INDEXAÇÃO
@@ -407,9 +460,7 @@ def index_documents(
         path=str(CHROMA_DIR)
     )
 
-    embedding = SentenceTransformerEmbeddingFunction(
-        model_name=EMBEDDING_MODEL
-    )
+    embedding = create_embedding_function()
 
     collection = client.get_or_create_collection(
         COLLECTION_NAME,
