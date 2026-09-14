@@ -391,12 +391,20 @@ def index_documents(
             f"Nenhum documento encontrado em: {raw_dir}"
         )
 
-    if reset and CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR)
-
-    client = chromadb.PersistentClient(
-        path=str(CHROMA_DIR)
+if reset and CHROMA_DIR.exists():
+    shutil.rmtree(
+        CHROMA_DIR,
+        ignore_errors=True,
     )
+
+CHROMA_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+client = chromadb.PersistentClient(
+    path=str(CHROMA_DIR)
+)
 
     embedding = SentenceTransformerEmbeddingFunction(
         model_name=EMBEDDING_MODEL
