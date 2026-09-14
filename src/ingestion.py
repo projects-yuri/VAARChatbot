@@ -437,6 +437,7 @@ def create_embedding_function(
 def index_documents(
     raw_dir: Path = RAW_DIR,
     reset: bool = False,
+    batch_size: int = 64,
 ) -> int:
 
     if not raw_dir.exists() or not any(raw_dir.iterdir()):
@@ -450,7 +451,6 @@ def index_documents(
             ignore_errors=True,
         )
 
-    # Garante que o diretório exista antes de abrir o Chroma
     CHROMA_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -467,9 +467,21 @@ def index_documents(
         embedding_function=embedding,
     )
 
-    documents: list[str] = []
-    metadatas: list[dict] = []
-    ids: list[str] = []
+    # Se o índice já estiver preenchido, não indexa tudo novamente.
+    existing = collection.count()
+
+    if existing > 0 and not reset:
+        print(
+            f"Índice já existente com {existing} chunks. "
+            "Reindexação ignorada."
+        )
+        return existing
+
+    documents = []
+    metadatas = []
+    ids = []
+
+    total = 0
 
     for text, metadata in document_records(raw_dir):
 
@@ -493,19 +505,46 @@ def index_documents(
         metadatas.append(metadata)
         ids.append(stable_id)
 
-    if not documents:
+        # Envia pequenos lotes ao Chroma
+        if len(documents) >= batch_size:
+
+            collection.upsert(
+                documents=documents,
+                metadatas=metadatas,
+                ids=ids,
+            )
+
+            total += len(documents)
+
+            print(
+                f"Indexados {total} chunks..."
+            )
+
+            documents.clear()
+            metadatas.clear()
+            ids.clear()
+
+    # Último lote
+    if documents:
+
+        collection.upsert(
+            documents=documents,
+            metadatas=metadatas,
+            ids=ids,
+        )
+
+        total += len(documents)
+
+    if total == 0:
         raise ValueError(
             "Não foi possível extrair texto dos documentos."
         )
 
-    collection.upsert(
-        documents=documents,
-        metadatas=metadatas,
-        ids=ids,
+    print(
+        f"Indexação concluída: {total} chunks."
     )
 
-    return len(documents)
-
+    return total
 
 # =========================================================
 # EXECUÇÃO
