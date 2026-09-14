@@ -28,7 +28,10 @@ DEFAULT_CHROMA_DIR = (
 CHROMA_DIR = Path(
     os.getenv(
         "CHROMA_DIR",
-        str(DEFAULT_CHROMA_DIR),
+        str(
+            Path(tempfile.gettempdir())
+            / "pi5_chroma_v2"
+        ),
     )
 )
 
@@ -37,7 +40,6 @@ CHROMA_DIR.mkdir(
     parents=True,
     exist_ok=True,
 )
-
 
 COLLECTION_NAME = "pi5_documentos"
 
