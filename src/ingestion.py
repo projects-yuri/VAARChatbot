@@ -391,20 +391,21 @@ def index_documents(
             f"Nenhum documento encontrado em: {raw_dir}"
         )
 
-if reset and CHROMA_DIR.exists():
-    shutil.rmtree(
-        CHROMA_DIR,
-        ignore_errors=True,
+    if reset and CHROMA_DIR.exists():
+        shutil.rmtree(
+            CHROMA_DIR,
+            ignore_errors=True,
+        )
+
+    # Garante que o diretório exista antes de abrir o Chroma
+    CHROMA_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
-CHROMA_DIR.mkdir(
-    parents=True,
-    exist_ok=True,
-)
-
-client = chromadb.PersistentClient(
-    path=str(CHROMA_DIR)
-)
+    client = chromadb.PersistentClient(
+        path=str(CHROMA_DIR)
+    )
 
     embedding = SentenceTransformerEmbeddingFunction(
         model_name=EMBEDDING_MODEL
@@ -415,9 +416,9 @@ client = chromadb.PersistentClient(
         embedding_function=embedding,
     )
 
-    documents = []
-    metadatas = []
-    ids = []
+    documents: list[str] = []
+    metadatas: list[dict] = []
+    ids: list[str] = []
 
     for text, metadata in document_records(raw_dir):
 
