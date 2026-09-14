@@ -56,8 +56,13 @@ def ensure_index():
     O cache do Streamlit impede que isso seja executado
     novamente a cada pergunta.
     """
-    return index_documents(reset=True)
-
+@st.cache_resource(
+    show_spinner="Preparando e indexando os documentos..."
+)
+def ensure_index():
+    return index_documents(
+        reset=False
+    )
 
 try:
     total_chunks = ensure_index()
