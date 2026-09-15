@@ -51,6 +51,6 @@ EMBEDDING_MODEL = os.getenv(
 TOP_K = int(
     os.getenv(
         "TOP_K",
-        "5",
+        "8"
     )
 )
