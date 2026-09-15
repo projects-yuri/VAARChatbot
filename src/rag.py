@@ -235,3 +235,22 @@ def answer(
         )
 
     return str(content).strip(), hits
+    
+def is_csv_question(question: str) -> bool:
+    q = question.lower()
+
+    csv_terms = [
+        "indicador de atendimento",
+        "indicador de aprendizagem",
+        "evoluiu atendimento",
+        "evoluiu aprendizagem",
+        "coeficiente de distribuição",
+        "valor do vaar",
+        "quanto recebeu",
+        "quanto receberá",
+        "redes beneficiadas",
+        "arquivo vaar 2026",
+        "dados vaar 2026",
+    ]
+
+    return any(term in q for term in csv_terms)
