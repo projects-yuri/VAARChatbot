@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import re
 from functools import lru_cache
-from src.ingestion import index_documents
 
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
@@ -49,14 +48,47 @@ def get_embedding_function() -> SentenceTransformerEmbeddingFunction:
 
 @lru_cache(maxsize=1)
 def get_collection():
+    """
+    Abre a coleção do Chroma.
+
+    Se a coleção ainda não existir (por exemplo, após trocar o CHROMA_DIR
+    ou reiniciar o Streamlit Cloud), dispara a indexação uma vez e tenta
+    abrir novamente.
+    """
     client = chromadb.PersistentClient(
         path=str(CHROMA_DIR)
     )
 
-    return client.get_collection(
-        COLLECTION_NAME,
-        embedding_function=get_embedding_function(),
-    )
+    try:
+        return client.get_collection(
+            COLLECTION_NAME,
+            embedding_function=get_embedding_function(),
+        )
+
+    except Exception as first_error:
+        # Importação local evita dependência circular na carga do módulo.
+        from src.ingestion import index_documents
+
+        index_documents(reset=False)
+
+        # Reabre o cliente depois da indexação.
+        client = chromadb.PersistentClient(
+            path=str(CHROMA_DIR)
+        )
+
+        try:
+            return client.get_collection(
+                COLLECTION_NAME,
+                embedding_function=get_embedding_function(),
+            )
+
+        except Exception as second_error:
+            raise RuntimeError(
+                "Não foi possível criar ou abrir a coleção "
+                f"'{COLLECTION_NAME}' no Chroma. "
+                f"Erro inicial: {first_error}. "
+                f"Erro após indexação: {second_error}"
+            ) from second_error
 
 
 def is_csv_question(question: str) -> bool:
