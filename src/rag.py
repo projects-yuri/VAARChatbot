@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 from functools import lru_cache
+from src.ingestion import index_documents
 
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
